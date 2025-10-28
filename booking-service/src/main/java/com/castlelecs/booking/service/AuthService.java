@@ -1,0 +1,63 @@
+package com.castlelecs.booking.service;
+
+import com.castlelecs.booking.model.User;
+import com.castlelecs.booking.repo.UserRepository;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.crypto.bcrypt.BCrypt;
+import org.springframework.stereotype.Service;
+
+import javax.crypto.SecretKey;
+import java.nio.charset.StandardCharsets;
+import java.time.Instant;
+import java.util.Date;
+import java.util.Map;
+
+@Service
+public class AuthService {
+    private final UserRepository userRepository;
+    private final SecretKey key;
+
+    public AuthService(UserRepository userRepository, @Value("${security.jwt.secret}") String secret) {
+        this.userRepository = userRepository;
+
+        byte[] bytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (bytes.length < 32) { // HS256 needs >= 256-bit key
+            byte[] padded = new byte[32];
+            System.arraycopy(bytes, 0, padded, 0, bytes.length);
+            bytes = padded;
+        }
+        this.key = Keys.hmacShaKeyFor(bytes);
+    }
+
+    public User register(String username, String password, boolean admin) {
+        User u = new User();
+        u.setUsername(username);
+        u.setPasswordHash(BCrypt.hashpw(password, BCrypt.gensalt()));
+        u.setRole(admin ? "ADMIN" : "USER");
+        return userRepository.save(u);
+    }
+
+    public String login(String username, String password) {
+        User u = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("User not found"));
+
+        if (!BCrypt.checkpw(password, u.getPasswordHash())) {
+            throw new IllegalArgumentException("Bad credentials");
+        }
+
+        Instant now = Instant.now();
+
+        return Jwts.builder()
+                .subject(u.getId().toString())
+                .claims(Map.of(
+                        "scope", u.getRole(),
+                        "username", u.getUsername()
+                ))
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(3600)))
+                .signWith(key)
+                .compact();
+    }
+}
