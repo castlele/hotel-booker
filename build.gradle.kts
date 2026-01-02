@@ -6,13 +6,13 @@ plugins {
     java
 }
 
-group = "com.castlelecs"
-version = "0.0.1-SNAPSHOT"
-
 allprojects {
     repositories {
         mavenCentral()
     }
+
+    group = "com.castlelecs"
+    version = "0.0.1-SNAPSHOT"
 }
 
 subprojects {
@@ -23,7 +23,6 @@ subprojects {
         toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
     }
 
-    // Import Spring Cloud BOM compatible with Spring Boot 3.3.x
     extensions.configure<DependencyManagementExtension> {
         imports {
             mavenBom("org.springframework.cloud:spring-cloud-dependencies:2023.0.3")
