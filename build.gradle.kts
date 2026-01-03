@@ -6,13 +6,13 @@ plugins {
     java
 }
 
+group = "com.castlelecs"
+version = "0.0.1-SNAPSHOT"
+
 allprojects {
     repositories {
         mavenCentral()
     }
-
-    group = "com.castlelecs"
-    version = "0.0.1-SNAPSHOT"
 }
 
 subprojects {
