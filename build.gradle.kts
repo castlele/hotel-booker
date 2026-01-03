@@ -4,15 +4,12 @@ plugins {
     id("org.springframework.boot") version "3.3.5" apply false
     id("io.spring.dependency-management") version "1.1.6" apply false
     java
+    checkstyle
 }
 
-group = "com.castlelecs"
-version = "0.0.1-SNAPSHOT"
-
 allprojects {
-    repositories {
-        mavenCentral()
-    }
+    group = "com.castlelecs"
+    version = "0.0.1-SNAPSHOT"
 }
 
 subprojects {
@@ -21,6 +18,10 @@ subprojects {
 
     java {
         toolchain { languageVersion.set(JavaLanguageVersion.of(17)) }
+    }
+
+    repositories {
+        mavenCentral()
     }
 
     extensions.configure<DependencyManagementExtension> {
@@ -32,4 +33,8 @@ subprojects {
     tasks.withType<Test> {
         useJUnitPlatform()
     }
+}
+
+checkstyle {
+    toolVersion = "10.17.0"
 }
