@@ -9,7 +9,7 @@ import java.util.List;
 @Entity
 @Data
 @Builder
-class Hotel {
+public class Hotel {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
