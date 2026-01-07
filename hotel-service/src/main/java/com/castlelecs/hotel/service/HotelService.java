@@ -13,8 +13,8 @@ import java.util.Optional;
 public class HotelService {
     private final HotelRepository hotelRepository;
 
-    public void saveHotel(Hotel hotel) {
-        hotelRepository.save(hotel);
+    public Hotel saveHotel(Hotel hotel) {
+        return hotelRepository.save(hotel);
     }
 
     public Optional<Hotel> getHotelById(Long id) {

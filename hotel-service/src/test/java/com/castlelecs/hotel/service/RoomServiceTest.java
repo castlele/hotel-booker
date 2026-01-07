@@ -7,10 +7,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -142,7 +139,25 @@ public class RoomServiceTest {
 
     @Test
     void getAllRecommentedRooms() {
+        int roomsAmount = 10;
+        List<Room> allRooms = saveMultipleRooms(roomsAmount);
 
+        for (int i = 0; i < roomsAmount; i++) {
+            Room room = allRooms.get(i);
+
+            if (i % 2 == 0) {
+                room.setAvailable(false);
+            }
+
+            room.setTimesBooked(i);
+        }
+
+        List<Room> availableRooms = sut.getSuggestedRooms();
+
+        assertNotEquals(allRooms.size(), availableRooms.size());
+        assertEquals(roomsAmount/2, availableRooms.size());
+        assertTrue(availableRooms.stream().allMatch(Room::getAvailable));
+        assertEquals(allRooms.stream().filter(Room::getAvailable).sorted(Comparator.comparing(Room::getTimesBooked)).toList(), availableRooms);
     }
 
     private List<Room> saveMultipleRooms(Integer size) {

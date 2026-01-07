@@ -5,6 +5,7 @@ import com.castlelecs.hotel.repository.RoomRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,5 +32,13 @@ public class RoomService {
 
     public List<Room> getAvailableRooms() {
         return roomRepository.findByAvailableTrue();
+    }
+
+    public List<Room> getSuggestedRooms() {
+        return roomRepository
+                .findByAvailableTrue()
+                .stream()
+                .sorted(Comparator.comparing(Room::getTimesBooked))
+                .toList();
     }
 }
