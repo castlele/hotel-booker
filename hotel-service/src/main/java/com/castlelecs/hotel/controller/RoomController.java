@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -15,6 +16,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.castlelecs.hotel.dto.CreateRoomRequest;
+import com.castlelecs.hotel.dto.RoomResponse;
 import com.castlelecs.hotel.entity.Room;
 import com.castlelecs.hotel.service.RoomService;
 
@@ -44,8 +47,18 @@ class RoomController {
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
-    public Room createRoom(@RequestBody Room room) {
-        return roomService.saveRoom(room);
+    public ResponseEntity<RoomResponse> createRoom(@RequestBody @Valid CreateRoomRequest req) {
+        Room room = roomService.createRoom(req);
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(
+                new RoomResponse(
+                        room.getId(),
+                        room.getHotel().getId(),
+                        room.getNumber(),
+                        room.getAvailable(),
+                        room.getTimesBooked()
+                )
+        );
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
