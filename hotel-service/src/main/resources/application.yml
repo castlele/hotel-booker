@@ -1,0 +1,13 @@
+spring:
+  application:
+    name: eureka-server
+
+  security:
+    user:
+      name: admin
+      password: admin
+      roles: ADMIN
+
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET}

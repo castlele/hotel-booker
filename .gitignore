@@ -8,6 +8,7 @@ bin
 .project
 
 .settings
+.factorypath
 
 *.db
 docs/todo.norg

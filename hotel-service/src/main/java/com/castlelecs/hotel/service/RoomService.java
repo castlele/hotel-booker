@@ -14,8 +14,8 @@ import java.util.Optional;
 public class RoomService {
     private final RoomRepository roomRepository;
 
-    public void saveRoom(Room room) {
-        roomRepository.save(room);
+    public Room saveRoom(Room room) {
+        return roomRepository.save(room);
     }
 
     public Optional<Room> getRoomById(Long id) {

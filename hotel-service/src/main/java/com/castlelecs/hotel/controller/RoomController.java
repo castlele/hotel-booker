@@ -15,59 +15,64 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.castlelecs.hotel.entity.Hotel;
-import com.castlelecs.hotel.service.HotelService;
+import com.castlelecs.hotel.entity.Room;
+import com.castlelecs.hotel.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
 
 @RestController
-@RequestMapping("/api/hotels")
+@RequestMapping("/api/rooms")
 @RequiredArgsConstructor
-public class HotelController {
+class RoomController {
 
-    private final HotelService hotelService;
+    private final RoomService roomService;
 
     @GetMapping
-    public List<Hotel> getHotels() {
-        return hotelService.getAllHotels();
+    public List<Room> getRooms() {
+        return roomService.getAllRooms();
+    }
+
+    @GetMapping("/recommended")
+    public List<Room> getRecommendedRooms() {
+        return roomService.getSuggestedRooms();
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Hotel> getHotelById(@PathVariable Long id) {
-        return getHotelByIdOrNotFound(id, ResponseEntity::ok);
+    public ResponseEntity<Room> getRoomById(Long id) {
+        return getRoomByIdOrNotFound(id, ResponseEntity::ok);
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PostMapping
-    public Hotel createHotel(@RequestBody Hotel hotel) {
-        return hotelService.saveHotel(hotel);
+    public Room createRoom(@RequestBody Room room) {
+        return roomService.saveRoom(room);
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @PutMapping("/{id}")
-    public ResponseEntity<Hotel> updateHotel(@PathVariable Long id, @RequestBody Hotel newHotel) {
-        return getHotelByIdOrNotFound(id, hotel -> {
-            newHotel.setId(id);
+    public ResponseEntity<Room> updateRoom(@PathVariable Long id, @RequestBody Room newRoom) {
+        return getRoomByIdOrNotFound(id, room -> {
+            newRoom.setId(id);
 
-            return ResponseEntity.ok(hotelService.saveHotel(newHotel));
+            return ResponseEntity.ok(roomService.saveRoom(newRoom));
         });
     }
 
     @PreAuthorize("hasAuthority('ROLE_ADMIN')")
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteHotel(@PathVariable Long id) {
-        Optional<Hotel> hotel = hotelService.getHotelById(id);
+    public ResponseEntity<Void> deleteRoom(@PathVariable Long id) {
+        Optional<Room> room = roomService.getRoomById(id);
 
-        if (hotel.isPresent()) {
-            hotelService.deleteHotel(hotel.get());
+        if (room.isPresent()) {
+            roomService.deleteRoom(room.get());
             return ResponseEntity.ok().build();
         }
 
         return ResponseEntity.noContent().build();
     }
 
-    private ResponseEntity<Hotel> getHotelByIdOrNotFound(Long id, Function<Hotel, ResponseEntity<Hotel>> mapping) {
-        return hotelService.getHotelById(id)
+    private ResponseEntity<Room> getRoomByIdOrNotFound(Long id, Function<Room, ResponseEntity<Room>> mapping) {
+        return roomService.getRoomById(id)
                 .map(mapping)
                 .orElse(ResponseEntity.notFound().build());
     }
