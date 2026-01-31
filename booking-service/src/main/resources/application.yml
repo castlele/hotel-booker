@@ -1,0 +1,32 @@
+server:
+  port: 8081
+
+  error:
+    include-message: always
+    include-binding-errors: always
+    include-stacktrace: never
+
+app:
+  admin:
+    enabled: true
+    username: admin
+    password: admin
+    role: ADMIN
+
+spring:
+  application:
+    name: booking-service
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka
+
+integration:
+  hotel:
+    base-url: http://localhost:8082
+
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET:dev-secret-please-change-32-chars-min}
+    ttl-seconds: 3600
