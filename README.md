@@ -60,4 +60,12 @@ cd ./scripts/
 lua integration-tests.lua
 ```
 
+Доказательства успешного прохождения тестов:
+
+![integration tests results](./docs/res/integration-tests-results.png)
+
 > Все тесты запускаются с помощью `curl`. Если хочется видеть, какие именно запросы делаются, то в файле integration-tests.lua на самой верхней строке можно указать `LOGGING_REQUESTS = true`
+
+Пример вывода логов:
+
+![integration tests results](./docs/res/integration-tests-with-logging.png)
