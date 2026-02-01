@@ -8,6 +8,8 @@ import java.time.Instant;
 @Entity
 @Data
 @Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor
 public class BookingRequest {
 
     @Id

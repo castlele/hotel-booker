@@ -55,6 +55,10 @@ USER_TOKEN2=$(echo "$USER_AUTH_RES" | jq -r .token)
 echo "USER_TOKEN2 acquired (optional)"
 echo
 
+if [[ -z $USER_TOKEN ]]; then
+    USER_TOKEN=$USER_TOKEN2
+fi
+
 echo "== 3) Create ADMIN user via ADMIN endpoint (requires ADMIN token) =="
 ADMIN_AUTH_RES=$(http POST "$BOOKING_URL/api/user/auth" "" \
     "{\"username\":\"$ADMIN_USERNAME\",\"password\":\"$ADMIN_PASSWORD\"}")
@@ -112,7 +116,7 @@ REQ_ID="req-$(date +%s)-$(openssl rand -hex 4 2>/dev/null || echo $RANDOM)"
 BOOKING_RAW=$(curl -sS -w "\nHTTP_STATUS:%{http_code}\n" -X POST "$BOOKING_URL/api/booking" \
   -H "Authorization: Bearer $USER_TOKEN" \
   -H "Content-Type: application/json" \
-  -d "{\"requestId\":\"$REQ_ID\",\"autoSelect\":true,\"roomId\":999999,\"startDate\":\"2026-02-10\",\"endDate\":\"2026-02-12\"}")
+  -d "{\"requestId\":\"$REQ_ID\",\"autoSelect\":true,\"roomId\":1,\"startDate\":\"2026-02-10\",\"endDate\":\"2026-02-12\"}")
 
 BOOKING_BODY=$(echo "$BOOKING_RAW" | sed '/^HTTP_STATUS:/d')
 
@@ -121,74 +125,68 @@ BOOKING1_ID=$(echo "$BOOKING_BODY" | jq -r '.id // empty')
 echo "BOOKING1_ID=$BOOKING1_ID"
 echo
 
-#
-# echo "== 10) BOOKING: Idempotency повтор того же requestId -> должен вернуть тот же booking =="
-# BOOKING1_REPEAT=$(http POST "$BOOKING_URL/api/booking" "$USER_TOKEN" \
-#     "{\"requestId\":\"$REQ_ID_1\",\"autoSelect\":true,\"roomId\":999,\"startDate\":\"$START_DATE\",\"endDate\":\"$END_DATE\"}")
-# echo "$BOOKING1_REPEAT" | json
-# echo
-#
-# echo "== 11) BOOKING: POST /api/booking (USER) autoSelect=false with explicit roomId =="
-# REQ_ID_2="req-$(date +%s)-2"
-# # roomId берём из рекомендованных, если есть
-# CHOSEN_ROOM_ID=$(echo "$ROOMS_REC" | jq -r '.[0].id // empty' || true)
-# if [[ -z "${CHOSEN_ROOM_ID:-}" ]]; then
-#     # fallback: try from earlier created
-#     CHOSEN_ROOM_ID="${ROOM1_ID:-1}"
-# fi
-#
-# BOOKING2=$(http POST "$BOOKING_URL/api/booking" "$USER_TOKEN" \
-#     "{\"requestId\":\"$REQ_ID_2\",\"autoSelect\":false,\"roomId\":$CHOSEN_ROOM_ID,\"startDate\":\"$START_DATE\",\"endDate\":\"$END_DATE\"}")
-# echo "$BOOKING2" | json
-# BOOKING2_ID=$(echo "$BOOKING2" | jq -r .id)
-# echo "BOOKING2_ID=$BOOKING2_ID"
-# echo
-#
-# echo "== 12) BOOKING: GET /api/bookings history (USER) =="
-# HISTORY=$(http GET "$BOOKING_URL/api/bookings" "$USER_TOKEN")
-# echo "$HISTORY" | json
-# echo
-#
-# echo "== 13) BOOKING: GET /api/booking/{id} (USER) =="
-# ONE=$(http GET "$BOOKING_URL/api/booking/$BOOKING1_ID" "$USER_TOKEN")
-# echo "$ONE" | json
-# echo
-#
-# echo "== 14) BOOKING: DELETE /api/booking/{id} cancel (USER) =="
-# CANCEL_REQ="cancel-$(date +%s)"
-# http DELETE "$BOOKING_URL/api/booking/$BOOKING1_ID" "$USER_TOKEN" "" \
-#     -H "X-Request-Id: $CANCEL_REQ" || true
-# echo "Cancelled booking id=$BOOKING1_ID"
-# echo
-#
-# echo "== 15) BOOKING: GET /api/booking/{id} after cancel => status should be CANCELLED =="
-# ONE2=$(http GET "$BOOKING_URL/api/booking/$BOOKING1_ID" "$USER_TOKEN")
-# echo "$ONE2" | json
-# echo
-#
-# echo "== 16) NEGATIVE: call protected endpoint without token => 401 =="
-# set +e
-# curl -i -sS "$BOOKING_URL/api/bookings" | head -n 20
-# set -e
-# echo
-#
-# echo "== 17) NEGATIVE: call /api/booking/{id} of another user => 403 (requires second user) =="
-# echo "Creating second user..."
-# U2="user2"
-# U2P="password123"
-# U2REG=$(http POST "$BOOKING_URL/user/register" "" "{\"username\":\"$U2\",\"password\":\"$U2P\"}")
-# U2TOKEN=$(echo "$U2REG" | jq -r .token)
-#
-# echo "Second user tries to read booking of first user:"
-# set +e
-# curl -i -sS -H "Authorization: Bearer $U2TOKEN" "$BOOKING_URL/api/booking/$BOOKING2_ID" | head -n 20
-# set -e
-# echo
-#
-# echo "== 18) NEGATIVE (dates conflict / 409) =="
-# echo "This depends on your real Hotel confirm-availability/locking logic."
-# echo "If you implemented it, create two bookings overlapping same room/dates and expect 409."
-# echo "Otherwise skip for now."
-# echo
+
+echo "== 10) BOOKING: Idempotency повтор того же requestId -> должен вернуть тот же booking =="
+BOOKING1_REPEAT=$(http POST "$BOOKING_URL/api/booking" "$USER_TOKEN" \
+    "{\"requestId\":\"$REQ_ID\",\"autoSelect\":true,\"roomId\":1,\"startDate\":\"$START_DATE\",\"endDate\":\"$END_DATE\"}")
+echo "$BOOKING1_REPEAT" | json
+echo
+
+echo "== 11) BOOKING: POST /api/booking (USER) autoSelect=false with explicit roomId =="
+REQ_ID_2="req-$(date +%s)-2"
+# roomId берём из рекомендованных, если есть
+CHOSEN_ROOM_ID=$(echo "$ROOMS_REC" | jq -r '.[0].id // empty' || true)
+if [[ -z "${CHOSEN_ROOM_ID:-}" ]]; then
+    # fallback: try from earlier created
+    CHOSEN_ROOM_ID="${ROOM1_ID:-1}"
+fi
+
+BOOKING2=$(http POST "$BOOKING_URL/api/booking" "$USER_TOKEN" \
+    "{\"requestId\":\"$REQ_ID_2\",\"autoSelect\":false,\"roomId\":$CHOSEN_ROOM_ID,\"startDate\":\"$START_DATE\",\"endDate\":\"$END_DATE\"}")
+echo "$BOOKING2" | json
+BOOKING2_ID=$(echo "$BOOKING2" | jq -r .id)
+echo "BOOKING2_ID=$BOOKING2_ID"
+echo
+
+echo "== 12) BOOKING: GET /api/bookings history (USER) =="
+HISTORY=$(http GET "$BOOKING_URL/api/bookings" "$USER_TOKEN")
+echo "$HISTORY" | json
+echo
+
+echo "== 13) BOOKING: GET /api/booking/{id} (USER) =="
+ONE=$(http GET "$BOOKING_URL/api/booking/$BOOKING1_ID" "$USER_TOKEN")
+echo "$ONE" | json
+echo
+
+echo "== 14) BOOKING: DELETE /api/booking/{id} cancel (USER) =="
+CANCEL_REQ="cancel-$(date +%s)"
+http DELETE "$BOOKING_URL/api/booking/$BOOKING1_ID" "$USER_TOKEN" "" \
+    -H "X-Request-Id: $CANCEL_REQ" || true
+echo "Cancelled booking id=$BOOKING1_ID"
+echo
+
+echo "== 15) BOOKING: GET /api/booking/{id} after cancel => status should be CANCELLED =="
+ONE2=$(http GET "$BOOKING_URL/api/booking/$BOOKING1_ID" "$USER_TOKEN")
+echo "$ONE2" | json
+echo
+
+echo "== 16) NEGATIVE: call protected endpoint without token => 401 =="
+set +e
+curl -i -sS "$BOOKING_URL/api/bookings" | head -n 20
+set -e
+echo
+
+echo "== 17) NEGATIVE: call /api/booking/{id} of another user => 401 (requires second user) =="
+echo "Creating second user..."
+U2="user2"
+U2P="password123"
+U2REG=$(http POST "$BOOKING_URL/user/register" "" "{\"username\":\"$U2\",\"password\":\"$U2P\"}")
+U2TOKEN=$(echo "$U2REG" | jq -r .token)
+
+echo "Second user tries to read booking of first user:"
+set +e
+curl -i -sS -H "Authorization: Bearer $U2TOKEN" "$BOOKING_URL/booking/$BOOKING2_ID" | head -n 20
+set -e
+echo
 
 echo "DONE."
