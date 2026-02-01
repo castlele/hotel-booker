@@ -30,7 +30,14 @@ public class SecurityConfig {
         return http
         .csrf(AbstractHttpConfigurer::disable)
         .authorizeHttpRequests(auth -> auth
-            .requestMatchers(HttpMethod.GET, "/api/hotels/**", "/api/rooms/**").permitAll()
+            .requestMatchers(
+                HttpMethod.GET,
+                "/api/hotels/**",
+                "/api/rooms/**",
+                "/swagger-ui/**",
+                "/v3/api-docs/**",
+                "/swagger-ui.html"
+            ).permitAll()
             .anyRequest().authenticated()
         )
         .oauth2ResourceServer(oauth -> oauth.jwt(Customizer.withDefaults()))

@@ -14,11 +14,17 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.castlelecs.hotel.dto.ConfirmAvailabilityRequest;
 import com.castlelecs.hotel.dto.CreateRoomRequest;
+import com.castlelecs.hotel.dto.RoomLockResponse;
 import com.castlelecs.hotel.dto.RoomResponse;
 import com.castlelecs.hotel.entity.Room;
+import com.castlelecs.hotel.entity.RoomLock;
+import com.castlelecs.hotel.service.RoomAvailabilityService;
 import com.castlelecs.hotel.service.RoomService;
 
 import lombok.RequiredArgsConstructor;
@@ -29,10 +35,12 @@ import lombok.RequiredArgsConstructor;
 class RoomController {
 
     private final RoomService roomService;
+    private final RoomAvailabilityService availabilityService;
+
 
     @GetMapping
     public List<Room> getRooms() {
-        return roomService.getAllRooms();
+        return roomService.getAvailableRooms();
     }
 
     @GetMapping("/recommended")
@@ -84,9 +92,40 @@ class RoomController {
         return ResponseEntity.noContent().build();
     }
 
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/confirm-availability")
+    @ResponseStatus(HttpStatus.OK)
+    public RoomLockResponse confirmAvailability(@PathVariable("id") Long roomId,
+        @RequestBody @Valid ConfirmAvailabilityRequest req) {
+        RoomLock lock = availabilityService.confirmAvailability(roomId, req);
+        return toResponse(lock);
+    }
+
+    @PreAuthorize("hasRole('ADMIN')")
+    @PostMapping("/{id}/release")
+    @ResponseStatus(HttpStatus.OK)
+    public RoomLockResponse release(@PathVariable("id") Long roomId,
+        @RequestParam("requestId") String requestId) {
+        RoomLock lock = availabilityService.release(roomId, requestId);
+        return toResponse(lock);
+    }
+
+    private static RoomLockResponse toResponse(RoomLock lock) {
+        return new RoomLockResponse(
+            lock.getId(),
+            lock.getRoomId(),
+            lock.getRequestId(),
+            lock.getBookingId(),
+            lock.getStartDate(),
+            lock.getEndDate(),
+            lock.getStatus(),
+            lock.getCreatedAt()
+        );
+    }
+
     private ResponseEntity<Room> getRoomByIdOrNotFound(Long id, Function<Room, ResponseEntity<Room>> mapping) {
         return roomService.getRoomById(id)
-                .map(mapping)
-                .orElse(ResponseEntity.notFound().build());
+        .map(mapping)
+        .orElse(ResponseEntity.notFound().build());
     }
 }
